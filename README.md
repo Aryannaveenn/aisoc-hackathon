@@ -29,6 +29,22 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 To rebuild the famous-site rooms (8 Claude calls): `npm run rooms:prebuild` (add `--force` to overwrite, or pass ids like `spotify` to build just those).
 
+## Deploy to Netlify
+
+The repo is ready for Netlify: `public/` is served as static files and the API runs as functions in `netlify/functions` (see `netlify.toml`).
+
+1. Push the repo to GitHub, then in Netlify choose **Add new project → Import an existing project** and pick the repo. The build settings come from `netlify.toml`, so leave them as they are.
+2. Add the environment variable `ANTHROPIC_API_KEY` under **Project configuration → Environment variables**, with the **Functions** scope. (If you add it after the first deploy, redeploy.)
+3. Deploy. The build runs `npm run build`, which bundles the demo and pre-built rooms into the functions.
+
+Or from the command line: `npx netlify-cli login`, `npx netlify-cli init`, `npx netlify-cli env:set ANTHROPIC_API_KEY sk-ant-...`, then `npx netlify-cli deploy --build --prod`.
+
+How it differs from the local server:
+- Netlify functions can't stream for more than 60 seconds, so building a room runs as a **background function** (up to 15 minutes). `POST /api/room` answers `202 { jobId }`, and the loading screen polls `GET /api/room-job/:id` for the same progress events.
+- Rooms players generate, and the build jobs, are kept in **Netlify Blobs** (no setup needed).
+- Building a room is limited to 3 per visitor every 3 minutes, and the ghost to 15 questions a minute, so strangers can't run up your Anthropic bill. Both limits are in the function files.
+- To try the Netlify setup locally: `npx netlify-cli dev` (it reads `.env`).
+
 ## How it works
 
 - `server.js` mounts two routers. `routes/rooms.js` handles `POST /api/room` (streams NDJSON as Claude finds clauses), `GET /api/room/:id` and `GET /api/rooms`. `routes/ghost.js` handles `POST /api/ghost`.

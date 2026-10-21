@@ -160,6 +160,49 @@ async function readNdjson(res, onEvent) {
 
 class SummonError extends Error {}
 
+const POLL_MS = 1200;
+const POLL_GIVE_UP_MS = 16 * 60 * 1000;
+const sleep = (ms, signal) =>
+  new Promise((resolve, reject) => {
+    const t = setTimeout(resolve, ms);
+    signal.addEventListener("abort", () => (clearTimeout(t), reject(signal.reason)), { once: true });
+  });
+
+// Polls a build job (GET /api/room-job/:id), passing each new progress event to
+// onEvent. Resolves with the finished room, or calls onEvent with an error.
+async function pollJob(jobId, onEvent, signal) {
+  const started = Date.now();
+  let seen = 0;
+  let misses = 0;
+  while (Date.now() - started < POLL_GIVE_UP_MS) {
+    await sleep(POLL_MS, signal);
+    let job;
+    try {
+      const res = await fetch(`/api/room-job/${encodeURIComponent(jobId)}`, { signal, cache: "no-store" });
+      job = await res.json();
+      if (!res.ok) throw new SummonError(job.error ?? "The summoning was lost. Try again.");
+      misses = 0;
+    } catch (err) {
+      if (signal.aborted || err instanceof SummonError) throw err;
+      if (++misses >= 5) throw err; // a few dropped polls are fine; a dead connection isn't
+      continue;
+    }
+    for (const event of job.events.slice(seen)) onEvent(event);
+    seen = job.events.length;
+    if (job.status === "error") {
+      onEvent({ type: "error", error: job.error });
+      return null;
+    }
+    if (job.status === "done") {
+      const res = await fetch(`/api/room/${encodeURIComponent(job.roomId)}`, { signal });
+      const room = await res.json();
+      if (!res.ok) throw new SummonError(room.error ?? "The room vanished before it opened. Try again.");
+      return room;
+    }
+  }
+  throw new SummonError("The ritual is taking far too long. Try again.");
+}
+
 async function summon(body) {
   const controller = new AbortController();
   loading.controller = controller;
@@ -177,16 +220,9 @@ async function summon(body) {
       signal: controller.signal,
     });
 
-    const type = res.headers.get("Content-Type") ?? "";
-    if (!res.ok || type.includes("application/json")) {
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.error) throw new SummonError(data.error ?? "The room couldn't be built. Try again.");
-      return finish(data); // an older server that answers with the room itself
-    }
-
     let room = null;
     let failure = null;
-    await readNdjson(res, (event) => {
+    const handle = (event) => {
       if (room || failure) return;
       switch (event.type) {
         case "status":
@@ -206,7 +242,22 @@ async function summon(body) {
         default:
           if (!event.type && event.error) failure = event.error;
       }
-    });
+    };
+
+    const type = res.headers.get("Content-Type") ?? "";
+    if (res.status === 429) throw new SummonError("Too many rooms summoned at once. Wait a few minutes and try again.");
+    if (!res.ok || type.includes("application/json")) {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) throw new SummonError(data.error ?? "The room couldn't be built. Try again.");
+      if (data.jobId) {
+        // Netlify: the room is built by a background job, so poll it for the same events.
+        room = await pollJob(data.jobId, handle, controller.signal);
+      } else {
+        return finish(data); // an older server that answers with the room itself
+      }
+    } else {
+      await readNdjson(res, handle);
+    }
     if (failure) throw new SummonError(failure);
     if (!room) throw new SummonError("The ritual was interrupted before the room was ready. Try again.");
     await finish(room);

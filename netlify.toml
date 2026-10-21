@@ -1,0 +1,14 @@
+# Netlify: the game in public/ is served as static files, and the API runs as
+# functions in netlify/functions. Set ANTHROPIC_API_KEY in the Netlify UI
+# (Project configuration > Environment variables); don't put it here.
+
+[build]
+  command = "npm run build"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

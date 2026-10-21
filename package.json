@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "dev": "node --env-file-if-exists=.env --watch server.js",
+    "build": "node scripts/bundle-rooms.js",
     "rooms:prebuild": "node --env-file-if-exists=.env scripts/prebuild.js"
   },
   "engines": {
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.137.0",
+    "@netlify/blobs": "^11.1.5",
     "express": "^5.3.0"
   }
 }

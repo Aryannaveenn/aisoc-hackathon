@@ -150,3 +150,7 @@ vite.config.ts.timestamp-*
 
 # Rooms players generate locally
 data/generated/
+
+# Netlify
+.netlify/
+lib/generated/

@@ -61,6 +61,7 @@ What `GET /api/room/:id` returns and `api.startGame(room)` takes. Puzzles are in
 
 ## HTTP API
 
+- **On Netlify**, `POST /api/room` can't stream, so it returns `202 { jobId }` instead. `GET /api/room-job/:jobId` returns `{ status: "queued" | "running" | "done" | "error", events: [ …the same status and clause events… ], roomId, error }`; once `done`, load the room with `GET /api/room/:roomId`. The client handles both.
 - `GET /api/rooms` returns `{ rooms: [{ id, company, theme, sourceUrl, dread: { score, label } | null, preset, createdAt }] }`, sorted by dread score, highest first.
 - `GET /api/room/:id` returns the full room JSON, or 404 `{ error }`. `demo` works.
 - `POST /api/room` with `{ url }` or `{ text }` (plus an optional `theme` id) streams **NDJSON** (`Content-Type: application/x-ndjson`), one JSON object per line:
