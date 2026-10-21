@@ -3,7 +3,8 @@
 
 import { api, on } from "../api.js";
 
-const QUESTIONS = 3;
+// No hints in the locks, so the ghost gets a question per lock.
+const QUESTIONS = 5;
 const MAX_QUESTION = 500;
 
 const GHOSTS = {
@@ -240,12 +241,17 @@ log.addEventListener("click", (e) => {
   search.dispatchEvent(new Event("input", { bubbles: true }));
 });
 
-button.addEventListener("click", () => {
+function open(question = "") {
   if (!roomId()) return;
-  dialog.showModal();
+  if (question && !input.disabled && !input.value.trim()) input.value = question.slice(0, MAX_QUESTION);
+  if (!dialog.open) dialog.showModal();
   if (!input.disabled) input.focus();
   log.lastElementChild?.scrollIntoView({ block: "nearest" });
-});
+}
+
+button.addEventListener("click", () => open());
+// A lock's "Ask the ghost" button: open with its question typed in, unsent.
+on("ghost:summon", ({ question }) => open(question));
 
 on("game:start", ({ room }) => reset(room));
 on("game:end", () => {

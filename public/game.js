@@ -15,7 +15,6 @@ const state = {
   maxHearts: 5,
   hearts: 5,
   solved: new Set(),
-  hintsShown: {},
   startedAt: 0,
   timer: 0,
   sound: true,
@@ -54,7 +53,6 @@ function startGame(room) {
   state.maxHearts = heartsFor(room);
   state.hearts = state.maxHearts;
   state.solved = new Set();
-  state.hintsShown = {};
   state.termsHighlight = null;
   state.over = false;
   state.startedAt = Date.now();
@@ -295,22 +293,14 @@ function openPuzzle(object) {
   }
 
   $("puzzle-form").hidden = solved;
-  $("hint-btn").parentElement.hidden = solved;
+  $("ask-ghost-row").hidden = solved || !state.room.id;
   $("puzzle-feedback").textContent = solved ? "This lock is already open." : "";
   $("puzzle-feedback").className = solved ? "feedback good" : "feedback";
-  renderHints(puzzle);
   renderReveal(puzzle, solved);
 
   $("puzzle").showModal();
   if (!solved) input.querySelector("input")?.focus();
   emit("puzzle:open", { index, object, solved });
-}
-
-function renderHints(puzzle) {
-  const shown = state.hintsShown[state.current] ?? 0;
-  $("hint-list").innerHTML = puzzle.hints.slice(0, shown).map((h) => `<li>${escapeHtml(h)}</li>`).join("");
-  $("hint-btn").hidden = shown >= puzzle.hints.length;
-  $("hint-btn").textContent = shown === 0 ? "Get a hint" : "Get another hint";
 }
 
 function renderReveal(puzzle, solved) {
@@ -322,10 +312,11 @@ function renderReveal(puzzle, solved) {
   $("reveal-digit").textContent = puzzle.digit;
 }
 
-$("hint-btn").addEventListener("click", () => {
+// There are no hints: the ghost is the only help. This hands it the lock's question.
+$("ask-ghost-btn").addEventListener("click", () => {
   const puzzle = state.room.puzzles[objectIndex(state.current)];
-  state.hintsShown[state.current] = (state.hintsShown[state.current] ?? 0) + 1;
-  renderHints(puzzle);
+  $("puzzle").close();
+  emit("ghost:summon", { question: `Where in the terms should I look for this: "${puzzle.question}"` });
 });
 
 $("puzzle-form").addEventListener("submit", async (e) => {
@@ -348,7 +339,7 @@ $("puzzle-form").addEventListener("submit", async (e) => {
     feedback.textContent = "The lock clicks open.";
     feedback.className = "feedback good";
     $("puzzle-form").hidden = true;
-    $("hint-btn").parentElement.hidden = true;
+    $("ask-ghost-row").hidden = true;
     renderReveal(puzzle, true);
     markSolved(object);
     return;

@@ -37,7 +37,7 @@ What `GET /api/room/:id` returns and `api.startGame(room)` takes. Puzzles are in
       "kind": "number" | "word" | "choice",
       "answer": "…", "accepted": ["…"], "options": ["…"],   // options only for choice
       "quote": "verbatim from the terms", "clause_ref": "8.2",
-      "plain_english": "…", "hints": ["…", "…"],
+      "plain_english": "…",
       "verified": true,             // quote found verbatim in termsText
       "digit": "4"
     }
@@ -111,6 +111,7 @@ Feature modules load before `game.js` finishes, so only call `api.*` inside even
 | `heart:lost` | `{ hearts, maxHearts, cause }` |
 | `scare:start` / `scare:end` | `{ level }` |
 | `sound:toggle` | `{ on }` |
+| `ghost:summon` | `{ question }`: a lock's "Ask the ghost" button; opens the ghost with the question typed in |
 | `game:end` | `{ won, room, theme, hearts, maxHearts, time, seconds }`. `#ending-extras` is emptied just before this fires |
 
 ### Mount points in `index.html`

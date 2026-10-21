@@ -306,9 +306,8 @@ body.flicker #screen-game { animation: flicker-lights var(--flicker-ms, 700ms) s
 .feedback.bad { color: var(--blood); }
 .feedback.good { color: #2f5d1e; }
 
-.hints { margin-top: 1em; }
-.hint-list { margin: 0.6em 0 0; padding-left: 1.4em; font-style: italic; }
-.hint-list li { margin-bottom: 0.3em; }
+.ask-ghost-row { margin: 1em 0 0; font-style: italic; font-size: var(--step--1); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.ask-ghost-row .btn { font-style: normal; }
 
 .quote {
   margin: 1.2em 0 0.3em;

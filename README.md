@@ -5,7 +5,7 @@ A Halloween escape room built from a website's terms and conditions. Paste a lin
 Claude also scores how nasty the terms are (the *dread* score), and nastier terms give you fewer hearts: 5, 4 or 3. Every wrong answer triggers a jumpscare and costs a heart, and each scare is worse than the last. Lose them all and you're bound by the terms forever.
 
 While you play:
-- **Ask the ghost** questions about the terms (3 per game). It answers from the real text but won't give away the locks.
+- **Ask the ghost**: the locks have no hints, so the ghost is your only help (5 questions per game). Each lock has a button that asks it about that lock. It answers from the real text and points you to the right clause, but never gives the answer away.
 - Partway through, **"We've updated our terms"**: a clause quietly changes, and you have to spot what changed before the door will open.
 - Random **hauntings** (whispers, a shadow crossing the room, knocking, handprints) keep you on edge without costing hearts.
 - At the end you get a **share card** and a challenge link (`/?room=<id>`) so friends can play the same room.

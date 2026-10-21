@@ -7,7 +7,7 @@ import { sendError } from "../lib/http.js";
 
 const router = Router();
 
-// The game allows 3 questions per play; this only stops runaway clients.
+// The game allows 5 questions per play; this only stops runaway clients.
 const WINDOW_MS = 10 * 60 * 1000;
 const LIMIT = 40;
 const recent = new Map();
