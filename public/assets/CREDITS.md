@@ -1,0 +1,22 @@
+# Asset credits
+
+Every image and sound here is public domain or CC0, so no attribution is required. The sources are listed so the licences can be checked. Images were cropped, converted to greyscale and contrast-adjusted for the jumpscares.
+
+## Scares (`scares/`)
+
+| File | Source | Licence |
+|---|---|---|
+| `1-spirit.jpg` | William Hope, spirit photograph of a couple with a "young female spirit" (c. 1920) | Public domain. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:A_couple_with_a_young_female_spirit.jpg) |
+| `2-nun.jpg` | *Häxan* (Benjamin Christensen, 1922), "A nun possessed" | CC0. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:H%C3%A4xan_(1922_film)_-_A_nun_possessed.jpg) |
+| `3-orlok.jpg` | Max Schreck as Count Orlok in *Nosferatu* (F. W. Murnau, 1922) | Public domain. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Max_Schreck_as_Count_Orlok_in_Nosferatu_%E2%80%93_Eine_Symphonie_des_Grauens_(1922).jpg) |
+| `4-devil.jpg` | *Häxan* (1922), "The devil and a monk" | CC0. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:H%C3%A4xan_(1922_film)_-_The_devil_and_a_monk.jpg) |
+| `5-phantom.jpg` | Lon Chaney's unmasking in *The Phantom of the Opera* (1925) | Public domain. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Phantomunmasking.jpg) |
+
+## Sounds (`sounds/`)
+
+| File | Source | Licence |
+|---|---|---|
+| `demonic-scream.mp3` | Nick121087, "Demonic Woman Scream" (via Freesound) | CC0. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nick121087_-_Demonic_Woman_Scream_(cc0)_(freesound).mp3) |
+| `scream.wav` | "WAPP-Scream" | CC0. [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:WAPP-Scream.wav) |
+
+The game synthesises the background music, heartbeat, shriek and orchestra-hit layers with the Web Audio API.

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms of Dread</title>
+  <meta name="description" content="A Halloween escape room built from a website's terms and conditions." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.5 1.2 4.4 2.6.9-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.9 4.2 7.2C19.5 16.4 12 21 12 21z%22 fill=%22%238f1421%22/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Title: the player "signs" a cursed contract to enter -->
+  <main id="screen-title" class="screen">
+    <article class="deed">
+      <h1 class="deed-title">Terms of Dread</h1>
+      <p class="deed-lede">Every website has terms you agreed to without reading. Tonight, they read you. Bring a site's terms and conditions, and they become a haunted office you have to escape by reading the fine print.</p>
+
+      <form id="summon-form" class="deed-form">
+        <label for="terms-url">Link to the terms and conditions</label>
+        <input id="terms-url" name="url" type="url" placeholder="https://example.com/terms" autocomplete="off" />
+
+        <details class="paste">
+          <summary>Or paste the terms text</summary>
+          <label for="terms-text" class="visually-hidden">Terms text</label>
+          <textarea id="terms-text" name="text" rows="7" placeholder="Paste the full terms here if the site won't let us read it."></textarea>
+        </details>
+
+        <p id="summon-error" class="form-error" role="alert" hidden></p>
+
+        <div class="deed-actions">
+          <button type="submit" class="btn btn-seal">Sign and enter</button>
+          <button type="button" id="play-demo" class="btn btn-quiet">Play the demo room</button>
+        </div>
+      </form>
+
+      <p class="deed-rules">You start with five hearts. Every wrong answer summons something, and costs you one.</p>
+      <p class="deed-warning">Contains loud screams, sudden frightening images and flashing effects. Turn your volume down if you're wearing headphones.</p>
+    </article>
+  </main>
+
+  <!-- Loading -->
+  <main id="screen-loading" class="screen" hidden>
+    <div class="loading">
+      <div class="candle" aria-hidden="true"><span class="flame"></span></div>
+      <p id="loading-line" class="loading-line" aria-live="polite">Reading the fine print by candlelight…</p>
+      <p class="loading-note">Building a room takes about a minute.</p>
+    </div>
+  </main>
+
+  <!-- Game -->
+  <main id="screen-game" class="screen" hidden>
+    <header class="hud">
+      <div id="hearts" class="hearts" aria-label="Hearts remaining"></div>
+      <p id="hud-company" class="hud-company"></p>
+      <div class="hud-right">
+        <span id="timer" class="timer" aria-label="Time elapsed">0:00</span>
+        <button id="open-contract" class="btn btn-small" type="button">Read the terms</button>
+        <button id="toggle-sound" class="btn btn-small btn-icon" type="button" aria-pressed="true" aria-label="Sound on" title="Sound on">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <p id="intro" class="intro"></p>
+
+    <div class="room-wrap">
+      <svg id="room" class="room" viewBox="0 0 1200 700" role="group" aria-label="The haunted office. Choose an object to search it."></svg>
+    </div>
+
+    <p class="room-help">Search each object. Every lock you open reveals one digit of the door code, in the order shown on its brass plate.</p>
+  </main>
+
+  <!-- Object puzzle -->
+  <dialog id="puzzle" class="sheet">
+    <form method="dialog" class="sheet-close-row"><button class="btn-close" aria-label="Close">×</button></form>
+    <div class="sheet-body">
+      <p id="puzzle-plate" class="plate"></p>
+      <h2 id="puzzle-title" class="sheet-title"></h2>
+      <p id="puzzle-riddle" class="riddle"></p>
+      <p id="puzzle-question" class="question"></p>
+
+      <form id="puzzle-form" class="lock">
+        <div id="puzzle-input"></div>
+        <button type="submit" class="btn btn-seal">Try the lock</button>
+      </form>
+      <p id="puzzle-feedback" class="feedback" role="status"></p>
+
+      <div class="hints">
+        <button id="hint-btn" type="button" class="btn btn-quiet btn-small">Ask the ghost for a hint</button>
+        <ol id="hint-list" class="hint-list"></ol>
+      </div>
+
+      <section id="puzzle-reveal" class="reveal" hidden>
+        <blockquote id="reveal-quote" class="quote"></blockquote>
+        <p id="reveal-ref" class="quote-ref"></p>
+        <h3>What this really means</h3>
+        <p id="reveal-plain"></p>
+        <p class="digit-line">Scratched on the back: <span id="reveal-digit" class="digit"></span></p>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Door -->
+  <dialog id="door" class="sheet">
+    <form method="dialog" class="sheet-close-row"><button class="btn-close" aria-label="Close">×</button></form>
+    <div class="sheet-body">
+      <h2 class="sheet-title">The way out</h2>
+      <p id="door-text" class="riddle"></p>
+      <form id="door-form" class="lock">
+        <label for="door-code" class="visually-hidden">Door code</label>
+        <input id="door-code" class="code-input" inputmode="numeric" autocomplete="off" maxlength="5" pattern="[0-9]*" />
+        <button type="submit" class="btn btn-seal">Turn the key</button>
+      </form>
+      <p id="door-feedback" class="feedback" role="status"></p>
+    </div>
+  </dialog>
+
+  <!-- Contract reader -->
+  <dialog id="contract" class="sheet sheet-tall">
+    <form method="dialog" class="sheet-close-row"><button class="btn-close" aria-label="Close">×</button></form>
+    <div class="sheet-body">
+      <h2 class="sheet-title">The terms you agreed to</h2>
+      <label for="contract-search" class="visually-hidden">Search the terms</label>
+      <input id="contract-search" type="search" placeholder="Search the terms" autocomplete="off" />
+      <p id="contract-count" class="contract-count" aria-live="polite"></p>
+      <div id="contract-text" class="contract-text" tabindex="0"></div>
+    </div>
+  </dialog>
+
+  <!-- End screens -->
+  <dialog id="ending" class="sheet sheet-tall">
+    <div class="sheet-body">
+      <h2 id="ending-title" class="ending-title"></h2>
+      <p id="ending-text" class="riddle"></p>
+      <h3>What you actually agreed to</h3>
+      <ul id="ending-verdict" class="verdict"></ul>
+      <div class="deed-actions">
+        <button id="retry" type="button" class="btn btn-seal">Try this room again</button>
+        <button id="new-room" type="button" class="btn btn-quiet">Summon a new room</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Jumpscare -->
+  <dialog id="scare" class="scare" aria-label="Something appears">
+    <div class="scare-stage">
+      <img class="scare-img base" alt="" />
+      <img class="scare-img split-r" alt="" />
+      <img class="scare-img split-c" alt="" />
+    </div>
+    <div class="scare-grain" aria-hidden="true"></div>
+    <p id="scare-text" class="scare-text"></p>
+  </dialog>
+
+  <script src="game.js" type="module"></script>
+</body>
+</html>

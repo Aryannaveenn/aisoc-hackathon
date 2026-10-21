@@ -1,0 +1,50 @@
+HOLLOWMERE CLOUD — TERMS OF SERVICE
+Last updated: 31 October 2026
+
+These Terms of Service ("Terms") govern your use of Hollowmere Cloud, the photo and file storage service operated by Hollowmere Labs Ltd ("Hollowmere", "we", "us"). Hollowmere Cloud is a fictional service created for the Terms of Dread demo. By creating an account, uploading a file, or simply continuing to browse after reading this sentence, you agree to these Terms.
+
+1. ELIGIBILITY
+1.1 You must be at least 16 years old to create an account. If you are under 18, you confirm that a parent or guardian has read these Terms with you.
+1.2 You may hold only one personal account. We may merge or close duplicate accounts without notice.
+
+2. YOUR SUBSCRIPTION
+2.1 Paid plans renew automatically at the end of each billing period at the then-current price unless you cancel before the renewal date.
+2.2 We will email you at least 7 days before an annual plan renews. We are not required to remind you before a monthly plan renews.
+2.3 You may cancel at any time from your account settings. Cancellation takes effect at the end of the current billing period, and fees already paid are non-refundable, except where the law requires otherwise.
+2.4 We may change our prices by giving you 30 days' notice. If you keep using a paid plan after the change takes effect, you accept the new price.
+
+3. YOUR CONTENT
+3.1 You keep ownership of the files you upload ("Your Content").
+3.2 By uploading Your Content, you grant Hollowmere a worldwide, royalty-free, sublicensable licence to host, copy, process, adapt and display Your Content for the purposes of operating, promoting and improving our services. This licence continues for a reasonable period after you delete Your Content, so that we can remove it from backups.
+3.3 You agree that we may use automated systems to analyse Your Content, including to recognise faces and objects, in order to build features such as smart albums.
+3.4 You must not upload anything that is unlawful, that infringes someone else's rights, or that you do not have permission to share.
+
+4. YOUR DATA
+4.1 We collect your name, email address, payment details, device identifiers, approximate location and information about how you use the service.
+4.2 We share usage information with our advertising partners so they can show you more relevant offers. We never sell the files you upload.
+4.3 You can download a copy of your data at any time from your account settings.
+
+5. INACTIVE ACCOUNTS
+5.1 If you do not sign in to a free account for 13 consecutive months, we may treat the account as abandoned.
+5.2 We will send a warning to your email address, and if you do not sign in within 30 days of that warning, we may permanently delete the account and all of Your Content.
+
+6. TERMINATION
+6.1 We may suspend or terminate your account at any time if we reasonably believe you have broken these Terms.
+6.2 If we terminate a paid account for reasons other than a breach of these Terms, we will refund the unused portion of your fees.
+
+7. DISCLAIMERS AND LIABILITY
+7.1 The service is provided "as is". We do not promise that it will be uninterrupted or that files will never be lost, and you should keep your own copies of anything important.
+7.2 To the maximum extent permitted by law, our total liability to you for any claim relating to the service is limited to the greater of the fees you paid us in the 12 months before the claim, or £50.
+
+8. DISPUTES
+8.1 Before bringing any claim, you agree to contact us and try to resolve the dispute informally for at least 60 days.
+8.2 Any dispute that is not resolved informally will be settled by binding individual arbitration, and you waive any right to take part in a class action or representative proceeding.
+8.3 You may opt out of arbitration by emailing optout@hollowmere.example within 30 days of first accepting these Terms.
+8.4 These Terms are governed by the laws of England and Wales.
+
+9. CHANGES TO THESE TERMS
+9.1 We may update these Terms from time to time. We will tell you about material changes by email or in the app at least 14 days before they take effect.
+9.2 If you do not agree with the updated Terms, you must stop using the service and close your account before the changes take effect.
+
+10. CONTACT
+Questions about these Terms can be sent to legal@hollowmere.example.
