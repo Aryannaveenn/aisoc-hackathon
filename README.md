@@ -24,10 +24,12 @@ ANTHROPIC_API_KEY=sk-ant-...
 - `server.js`: an Express server with a single endpoint, `POST /api/room`, that takes `{ url }` or `{ text }`.
 - `lib/fetchTerms.js`: fetches the page server-side (browsers block cross-site requests) and strips it to plain text.
 - `lib/generateRoom.js`: sends the full terms to Claude (`claude-opus-5-5`, structured JSON output) and asks for five puzzles, one per object. Each puzzle is grounded in a verbatim quote. The server checks every quote against the source text and marks any that were paraphrased, then assigns the hidden door-code digits.
-- `public/`: a plain HTML/CSS/JS client with no build step. It draws the room as SVG, synthesises the screams with the Web Audio API, and holds the game state.
+- `public/`: a plain HTML/CSS/JS client with no build step. It draws the room as SVG and holds the game state.
+- Jumpscares use public-domain horror film stills and 1920s spirit photographs, plus CC0 screams, all listed in `public/assets/CREDITS.md`. Every scare runs through a Web Audio "amp" (boost, brick-wall limiter, soft clipper) that holds the sound just under the digital ceiling. The background music, heartbeat and orchestra hits are synthesised in the browser.
 
 ## Notes
 
 - Some sites block bots or render their terms with JavaScript. If a link fails, paste the text instead.
+- The game shows a warning for loud sounds and flashing images. If the player's system has *reduce motion* turned on, the scares skip the shake, jitter and flashes.
 - Answers are checked in the browser, so anyone who opens dev tools can cheat.
 - The server will fetch any URL it's given, so don't expose it publicly as-is.
