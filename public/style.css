@@ -459,3 +459,11 @@ body.lights-out dialog[open]:not(.scare)::backdrop { background: #000; }
   .hud-company { grid-column: 1 / -1; grid-row: 1; }
   .heart { width: 22px; height: 20px; }
 }
+
+/* ---------- Headphones sign ---------- */
+.listen-warning { width: min(480px, calc(100vw - 32px)); text-align: center; }
+.listen-warning .sheet-body { padding-top: 32px; }
+.listen-icon { font-size: 3rem; line-height: 1; margin-bottom: 0.3em; animation: listen-pulse 2.4s ease-in-out infinite; }
+.listen-small { font-size: var(--step--1); color: var(--blood); margin: 0 0 1.4em; }
+@keyframes listen-pulse { 50% { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .listen-icon { animation: none; } }

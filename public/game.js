@@ -58,8 +58,9 @@ function startGame(room) {
   state.termsHighlight = null;
   state.over = false;
   state.startedAt = Date.now();
+  nextScare = makeDeck(SCARES.length);
+  nextScream = makeDeck(SCREAM_FILES.length);
   clearInterval(state.timer);
-  state.timer = setInterval(renderTimer, 1000);
 
   $("hud-company").textContent = room.company;
   $("intro").textContent = room.intro;
@@ -69,9 +70,25 @@ function startGame(room) {
   buildRoom();
   renderContract("");
   preloadScares();
-  startAmbience();
   show("screen-game");
-  emit("game:start", { room, theme: state.theme.id, maxHearts: state.maxHearts });
+  // Ask once per visit; retries go straight in.
+  if (warned) beginPlay();
+  else $("listen-warning").showModal();
+}
+
+let warned = false;
+$("listen-warning").addEventListener("close", () => {
+  warned = true;
+  beginPlay();
+});
+
+// The clock and the music wait until the player says they're ready.
+function beginPlay() {
+  state.startedAt = Date.now();
+  state.timer = setInterval(renderTimer, 1000);
+  renderTimer();
+  startAmbience();
+  emit("game:start", { room: state.room, theme: state.theme.id, maxHearts: state.maxHearts });
 }
 
 function elapsed() {
@@ -428,15 +445,40 @@ function renderContract(query) {
 
 /* ---------- Jumpscares ---------- */
 
-// One per heart, from unsettling to worst. Public-domain and CC0 film stills
-// and spirit photographs; see public/assets/CREDITS.md.
+// One per heart, shuffled each game so every wrong answer shows a different
+// face. Public-domain and CC0 film stills; see public/assets/CREDITS.md.
 const SCARES = [
-  { src: "assets/scares/1-spirit.jpg", focus: "50% 40%" },
   { src: "assets/scares/2-nun.jpg", focus: "50% 45%" },
   { src: "assets/scares/3-orlok.jpg", focus: "52% 30%" },
   { src: "assets/scares/4-devil.jpg", focus: "50% 35%" },
-  { src: "assets/scares/5-phantom.jpg", focus: "50% 35%" },
+  { src: "assets/scares/6-satan.jpg", focus: "50% 22%" },
+  { src: "assets/scares/11-chaney.jpg", focus: "60% 25%" },
 ];
+
+function shuffled(n) {
+  const order = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
+// Draws without repeats until the deck runs out, then reshuffles, never
+// putting the last card drawn on top.
+function makeDeck(n) {
+  let cards = [];
+  let last = -1;
+  return () => {
+    if (!cards.length) {
+      cards = shuffled(n);
+      if (n > 1 && cards[0] === last) cards.push(cards.shift());
+    }
+    return (last = cards.shift());
+  };
+}
+
+let nextScare = makeDeck(SCARES.length);
 
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -447,7 +489,7 @@ function preloadScares() {
 
 async function jumpscare(level) {
   const scare = $("scare");
-  const { src, focus } = SCARES[level - 1] ?? SCARES.at(-1);
+  const { src, focus } = SCARES[nextScare()];
   const final = level >= 5;
   const hitMs = 900 + level * 180 + (final ? 600 : 0);
   const calm = reducedMotion.matches;
@@ -518,12 +560,17 @@ let audio = null;
 let mainOut = null;   // everything goes through here, so mute is one switch
 let scareBus = null;  // the jumpscare amp: boost, limit, clip
 let ambience = null;
-const samples = {};
+const samples = [];
 
-const SAMPLE_FILES = {
-  scream: "assets/sounds/scream.wav",
-  demonic: "assets/sounds/demonic-scream.mp3",
-};
+// One scream per heart, shuffled like the faces so each wrong answer sounds different.
+const SCREAM_FILES = [
+  "assets/sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3",
+  "assets/sounds/demonic-scream.mp3",
+  "assets/sounds/ahhh-scream.mp3",
+  "assets/sounds/now-screaming.mp3",
+  "assets/sounds/cri-wilhelm.wav",
+];
+let nextScream = makeDeck(SCREAM_FILES.length);
 
 function unlockAudio() {
   if (!audio) {
@@ -565,10 +612,10 @@ function buildScareBus() {
 
 async function loadSamples() {
   await Promise.all(
-    Object.entries(SAMPLE_FILES).map(async ([name, url]) => {
+    SCREAM_FILES.map(async (url, i) => {
       try {
         const data = await fetch(url).then((r) => r.arrayBuffer());
-        samples[name] = await audio.decodeAudioData(data);
+        samples[i] = await audio.decodeAudioData(data);
       } catch {
         // The synthesised layers still play without the sample.
       }
@@ -576,8 +623,8 @@ async function loadSamples() {
   );
 }
 
-function playSample(name, { rate = 1, gain = 1, at = 0 } = {}) {
-  const buffer = samples[name];
+function playSample(index, { rate = 1, gain = 1, at = 0 } = {}) {
+  const buffer = samples[index];
   if (!buffer) return;
   const src = audio.createBufferSource();
   src.buffer = buffer;
@@ -599,14 +646,8 @@ function playScare(level, seconds) {
   if (!audio) return;
   const now = audio.currentTime;
 
-  // Real screams, pitched lower and stacked higher as the hearts run out.
-  if (level <= 2) {
-    playSample("scream", { rate: 1 - level * 0.05 });
-  } else {
-    playSample("demonic", { rate: 1.08 - (level - 3) * 0.12 });
-    if (level >= 4) playSample("scream", { rate: 0.7, gain: 0.8, at: 0.05 });
-    if (level >= 5) playSample("demonic", { rate: 0.62, gain: 0.7, at: 0.12 });
-  }
+  // A different real scream each time, pitched a little lower as the hearts run out.
+  playSample(nextScream(), { rate: 1.04 - level * 0.06 });
 
   // A synthetic shriek under the scream: detuned saws sliding down.
   const shriek = audio.createGain();
