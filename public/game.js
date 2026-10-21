@@ -1,106 +1,61 @@
-// Terms of Dread: the client-side game.
+// Terms of Dread: the core game. Features live in js/features/ and talk to
+// this file through js/api.js; see docs/CONTRACTS.md.
 
-const MAX_HEARTS = 5;
-const OBJECTS = ["portrait", "clock", "bookshelf", "desk", "safe"];
+import { api, emit } from "./js/api.js";
+import { getTheme } from "./js/rooms/index.js";
+import "./js/features/index.js";
+
 const NUMERALS = ["I", "II", "III", "IV", "V"];
-const OBJECT_NAMES = {
-  portrait: "The portrait",
-  clock: "The grandfather clock",
-  bookshelf: "The bookshelf",
-  desk: "The desk",
-  safe: "The safe",
-};
-const LOADING_LINES = [
-  "Reading the fine print by candlelight…",
-  "Searching for the clauses nobody reads…",
-  "Waking the ghosts of past users…",
-  "Hiding the door code around the office…",
-  "Sharpening the arbitration clause…",
-];
 
 const $ = (id) => document.getElementById(id);
 
 const state = {
   room: null,
-  hearts: MAX_HEARTS,
+  theme: getTheme("office"),
+  maxHearts: 5,
+  hearts: 5,
   solved: new Set(),
   hintsShown: {},
   startedAt: 0,
   timer: 0,
   sound: true,
   over: false,
+  scaring: false,
   current: null,
 };
+
+const doorGuards = [];
 
 /* ---------- Screens ---------- */
 
 function show(screen) {
+  document.documentElement.classList.remove("deep-link");
   for (const id of ["screen-title", "screen-loading", "screen-game"]) {
     $(id).hidden = id !== screen;
   }
+  emit("screen:show", { screen });
 }
-
-let loadingTimer = 0;
-function startLoading() {
-  show("screen-loading");
-  let i = 0;
-  $("loading-line").textContent = LOADING_LINES[0];
-  loadingTimer = setInterval(() => {
-    i = (i + 1) % LOADING_LINES.length;
-    $("loading-line").textContent = LOADING_LINES[i];
-  }, 4000);
-}
-const stopLoading = () => clearInterval(loadingTimer);
-
-/* ---------- Summoning a room ---------- */
-
-$("summon-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const url = $("terms-url").value.trim();
-  const text = $("terms-text").value.trim();
-  const error = $("summon-error");
-  if (!url && !text) {
-    error.textContent = "Add a link to the terms, or paste the text.";
-    error.hidden = false;
-    return;
-  }
-  error.hidden = true;
-  unlockAudio();
-  startLoading();
-  try {
-    const res = await fetch("/api/room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(text ? { text } : { url }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "The room couldn't be built.");
-    startGame(data);
-  } catch (err) {
-    show("screen-title");
-    error.textContent = err.message;
-    error.hidden = false;
-  } finally {
-    stopLoading();
-  }
-});
-
-$("play-demo").addEventListener("click", async () => {
-  unlockAudio();
-  const [room, termsText] = await Promise.all([
-    fetch("demo/room.json").then((r) => r.json()),
-    fetch("demo/terms.txt").then((r) => r.text()),
-  ]);
-  startGame({ ...room, termsText });
-});
 
 /* ---------- Game lifecycle ---------- */
 
+// Nastier terms leave you fewer hearts.
+function heartsFor(room) {
+  const score = room.dread?.score;
+  if (typeof score !== "number") return 5;
+  if (score >= 70) return 3;
+  if (score >= 40) return 4;
+  return 5;
+}
+
 function startGame(room) {
+  unlockAudio();
   state.room = room;
-  state.hearts = MAX_HEARTS;
+  state.theme = getTheme(room.theme);
+  state.maxHearts = heartsFor(room);
+  state.hearts = state.maxHearts;
   state.solved = new Set();
   state.hintsShown = {};
+  state.termsHighlight = null;
   state.over = false;
   state.startedAt = Date.now();
   clearInterval(state.timer);
@@ -108,6 +63,7 @@ function startGame(room) {
 
   $("hud-company").textContent = room.company;
   $("intro").textContent = room.intro;
+  $("contract-search").value = "";
   renderTimer();
   renderHearts();
   buildRoom();
@@ -115,11 +71,16 @@ function startGame(room) {
   preloadScares();
   startAmbience();
   show("screen-game");
+  emit("game:start", { room, theme: state.theme.id, maxHearts: state.maxHearts });
+}
+
+function elapsed() {
+  const s = Math.floor((Date.now() - state.startedAt) / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 function renderTimer() {
-  const s = Math.floor((Date.now() - state.startedAt) / 1000);
-  $("timer").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  $("timer").textContent = elapsed();
 }
 
 const HEART_PATH = "M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.5 1.2 4.4 2.6.9-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.9 4.2 7.2C19.5 16.4 12 21 12 21z";
@@ -127,8 +88,8 @@ const HEART_PATH = "M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.5 1.2 4
 function renderHearts(breakingIndex = -1) {
   const wrap = $("hearts");
   wrap.innerHTML = "";
-  wrap.setAttribute("aria-label", `${state.hearts} of ${MAX_HEARTS} hearts remaining`);
-  for (let i = 0; i < MAX_HEARTS; i++) {
+  wrap.setAttribute("aria-label", `${state.hearts} of ${state.maxHearts} hearts remaining`);
+  for (let i = 0; i < state.maxHearts; i++) {
     const lost = i >= state.hearts;
     wrap.insertAdjacentHTML(
       "beforeend",
@@ -144,17 +105,27 @@ function endGame(won) {
   state.over = true;
   clearInterval(state.timer);
   stopAmbience();
-  for (const d of ["puzzle", "door", "contract"]) $(d).close();
+  for (const d of document.querySelectorAll("dialog[open]")) if (d.id !== "ending") d.close();
 
   const title = $("ending-title");
   title.textContent = won ? "You escaped" : "Bound by the terms";
   title.classList.toggle("won", won);
-  const time = $("timer").textContent;
+  const time = elapsed();
   $("ending-text").textContent = won
-    ? `You read the fine print and walked out of ${state.room.company}'s office in ${time} with ${state.hearts} of ${MAX_HEARTS} hearts left. Most people never get this far: they just click "I agree".`
+    ? `You read the fine print and escaped ${state.room.company}'s ${state.theme.name.replace(/^The /, "")} in ${time} with ${state.hearts} of ${state.maxHearts} hearts left. Most people never get this far: they just click "I agree".`
     : `Your last heart gave out. Like everyone else who never read the terms, you belong to ${state.room.company} now. The good news: you can still find out what you agreed to.`;
   $("ending-verdict").innerHTML = state.room.verdict.map((v) => `<li>${escapeHtml(v)}</li>`).join("");
+  $("ending-extras").innerHTML = "";
   $("ending").showModal();
+  emit("game:end", {
+    won,
+    room: state.room,
+    theme: state.theme.id,
+    hearts: state.hearts,
+    maxHearts: state.maxHearts,
+    time,
+    seconds: Math.floor((Date.now() - state.startedAt) / 1000),
+  });
 }
 
 $("retry").addEventListener("click", () => {
@@ -181,153 +152,37 @@ function plate(index, x, y) {
     </g>`;
 }
 
-function hotspot(object, label, box, art) {
+function hotspotFrame(object, label, box, art) {
   const [x, y, w, h] = box;
   return `
-    <g class="hotspot" data-object="${object}" tabindex="0" role="button" aria-label="${label}">
+    <g class="hotspot${object === "door" ? " door" : ""}" data-object="${object}" tabindex="0" role="button" aria-label="${escapeHtml(label)}">
       <rect class="glow" x="${x - 8}" y="${y - 8}" width="${w + 16}" height="${h + 16}" rx="10" fill="rgb(179 242 138 / 0.07)" stroke="#b3f28a" stroke-opacity="0.5" stroke-dasharray="6 6"/>
       ${art}
       <rect class="outline" x="${x - 8}" y="${y - 8}" width="${w + 16}" height="${h + 16}" rx="10" fill="transparent" stroke="none"/>
     </g>`;
 }
 
+const objectIndex = (id) => state.theme.objects.findIndex((o) => o.id === id);
+
+function hotspot(object, box, art) {
+  const i = objectIndex(object);
+  if (i < 0) throw new Error(`Theme ${state.theme.id} has no object "${object}"`);
+  return hotspotFrame(object, `${state.theme.objects[i].name}, lock ${NUMERALS[i]}`, box, art);
+}
+
+function door(box, art) {
+  return hotspotFrame("door", state.theme.exitName ?? "The exit", box, art);
+}
+
+let unmountTheme = null;
+
 function buildRoom() {
-  const books = [];
-  const bookColors = ["#5b1a1f", "#2d3b2a", "#4a3a20", "#2a2840", "#6b4a1e", "#3c1530", "#203238"];
-  for (let shelf = 0; shelf < 4; shelf++) {
-    let x = 878;
-    let i = shelf * 3;
-    while (x < 1095) {
-      const w = 14 + ((i * 7) % 12);
-      const h = 62 + ((i * 13) % 22);
-      const tilt = i % 9 === 4 ? `transform="rotate(-12 ${x} ${shelf * 100 + 205})"` : "";
-      books.push(`<rect x="${x}" y="${shelf * 100 + 205 - h}" width="${w}" height="${h}" fill="${bookColors[i % bookColors.length]}" stroke="#0b0806" ${tilt}/>`);
-      x += w + 2;
-      i++;
-    }
-  }
-
-  const svg = `
-    <defs>
-      <pattern id="wallpaper" width="60" height="60" patternUnits="userSpaceOnUse">
-        <rect width="60" height="60" fill="#18261d"/>
-        <path d="M30 6 C38 18 38 26 30 34 C22 26 22 18 30 6Z M0 36 C8 48 8 56 0 64 M60 36 C52 48 52 56 60 64" fill="#1d2e23"/>
-      </pattern>
-      <radialGradient id="candlelight" cx="0.22" cy="0.72" r="0.55">
-        <stop offset="0" stop-color="#f2a63a" stop-opacity="0.32"/>
-        <stop offset="1" stop-color="#f2a63a" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
-        <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
-        <stop offset="1" stop-color="#000" stop-opacity="0.75"/>
-      </radialGradient>
-      <radialGradient id="moonglow" cx="0.5" cy="0.5" r="0.5">
-        <stop offset="0" stop-color="#dfe8d2" stop-opacity="0.5"/>
-        <stop offset="1" stop-color="#dfe8d2" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-
-    <rect width="1200" height="520" fill="url(#wallpaper)"/>
-    <rect y="500" width="1200" height="22" fill="#2a1a10"/>
-    <rect y="520" width="1200" height="180" fill="#1f150d"/>
-    ${[560, 610, 665].map((y) => `<line x1="0" x2="1200" y1="${y}" y2="${y}" stroke="#140d07" stroke-width="2"/>`).join("")}
-    ${[150, 420, 700, 980].map((x, i) => `<line x1="${x + (i % 2) * 60}" x2="${x + (i % 2) * 60}" y1="520" y2="700" stroke="#140d07" stroke-width="2"/>`).join("")}
-
-    <!-- Window and moon -->
-    <g>
-      <rect x="292" y="72" width="146" height="196" fill="#3a2a1a"/>
-      <rect x="302" y="82" width="126" height="176" fill="#0a1424"/>
-      <circle cx="380" cy="140" r="70" fill="url(#moonglow)"/>
-      <circle cx="380" cy="140" r="30" fill="#e6ecd8"/>
-      <circle cx="370" cy="132" r="5" fill="#c9d1bd"/><circle cx="390" cy="150" r="7" fill="#c9d1bd"/>
-      <path d="M302 236 Q330 214 352 236 Q380 206 428 236 V258 H302Z" fill="#05080c"/>
-      <line x1="365" y1="82" x2="365" y2="258" stroke="#3a2a1a" stroke-width="6"/>
-      <line x1="302" y1="170" x2="428" y2="170" stroke="#3a2a1a" stroke-width="6"/>
-      <path d="M302 82 L340 82 M302 82 L302 120 M302 82 L332 112 M314 82 Q312 96 302 98 M326 82 Q322 106 302 110" stroke="#9aa596" stroke-opacity="0.5" fill="none"/>
-    </g>
-
-    ${hotspot("portrait", "The portrait, lock I", [78, 96, 168, 214], `
-      <rect x="78" y="96" width="168" height="214" fill="#8a6a2a" stroke="#4f3a12" stroke-width="4"/>
-      <rect x="94" y="112" width="136" height="182" fill="#22261f"/>
-      <path d="M118 294 C120 240 140 226 162 226 C184 226 204 240 206 294Z" fill="#2c1d22"/>
-      <ellipse cx="162" cy="182" rx="36" ry="46" fill="#c7c4b0"/>
-      <path d="M126 168 C128 130 196 130 198 168 C190 150 134 150 126 168Z" fill="#1a1612"/>
-      <ellipse cx="148" cy="182" rx="9" ry="6" fill="#efe9d6"/>
-      <ellipse cx="176" cy="182" rx="9" ry="6" fill="#efe9d6"/>
-      <g class="portrait-eyes"><circle cx="148" cy="182" r="3.6" fill="#120c08"/><circle cx="176" cy="182" r="3.6" fill="#120c08"/></g>
-      <path d="M150 210 Q162 216 174 210" stroke="#6b4b45" stroke-width="2" fill="none"/>
-      ${plate(0, 162, 330)}`)}
-
-    ${hotspot("clock", "The grandfather clock, lock II", [716, 128, 98, 392], `
-      <path d="M722 200 Q765 118 808 200 V500 H722Z" fill="#3b2414" stroke="#1d1007" stroke-width="3"/>
-      <circle cx="765" cy="196" r="32" fill="#e3d6b2" stroke="#8a6a2a" stroke-width="4"/>
-      ${Array.from({ length: 12 }, (_, i) => {
-        const a = (i / 12) * Math.PI * 2;
-        return `<line x1="${765 + Math.sin(a) * 25}" y1="${196 - Math.cos(a) * 25}" x2="${765 + Math.sin(a) * 29}" y2="${196 - Math.cos(a) * 29}" stroke="#2b1d12" stroke-width="2"/>`;
-      }).join("")}
-      <line x1="765" y1="196" x2="765" y2="174" stroke="#2b1d12" stroke-width="3"/>
-      <line x1="765" y1="196" x2="780" y2="206" stroke="#2b1d12" stroke-width="3"/>
-      <rect x="740" y="246" width="50" height="210" fill="#120c07" stroke="#8a6a2a" stroke-width="2"/>
-      <g><line x1="765" y1="250" x2="765" y2="400" stroke="#8a6a2a" stroke-width="3"/><circle cx="765" cy="410" r="14" fill="#b08d3e"/>
-        <animateTransform attributeName="transform" type="rotate" values="-9 765 250;9 765 250;-9 765 250" dur="2s" repeatCount="indefinite"/></g>
-      <rect x="716" y="500" width="98" height="20" fill="#2a180c"/>
-      ${plate(1, 765, 476)}`)}
-
-    ${hotspot("bookshelf", "The bookshelf, lock III", [862, 96, 248, 424], `
-      <rect x="862" y="96" width="248" height="424" fill="#2a1a0e" stroke="#120a05" stroke-width="4"/>
-      ${[205, 305, 405, 505].map((y) => `<rect x="870" y="${y}" width="232" height="10" fill="#3d2614"/>`).join("")}
-      ${books.join("")}
-      <circle cx="1060" cy="190" r="12" fill="#d8d2bd"/><circle cx="1056" cy="188" r="2.5" fill="#000"/><circle cx="1064" cy="188" r="2.5" fill="#000"/>
-      <path d="M1100 104 L1060 104 M1100 104 L1100 140 M1100 104 L1072 132" stroke="#9aa596" stroke-opacity="0.5"/>
-      ${plate(2, 986, 70)}`)}
-
-    <!-- The exit door -->
-    <g class="hotspot door" data-object="door" tabindex="0" role="button" aria-label="The exit door">
-      <rect class="glow" x="470" y="160" width="200" height="370" rx="10" fill="rgb(179 242 138 / 0.07)" stroke="#b3f28a" stroke-opacity="0.5" stroke-dasharray="6 6"/>
-      <rect x="478" y="168" width="184" height="352" fill="#2a180c"/>
-      <rect x="490" y="180" width="160" height="340" fill="#4a2c16" stroke="#1d1007" stroke-width="3"/>
-      <rect x="506" y="198" width="128" height="120" fill="none" stroke="#2a180c" stroke-width="4"/>
-      <rect x="506" y="338" width="128" height="160" fill="none" stroke="#2a180c" stroke-width="4"/>
-      <circle cx="626" cy="350" r="9" fill="#b08d3e"/>
-      <path d="M622 366 h8 l-2 14 h-4z" fill="#0b0604"/>
-      <rect class="door-gap" x="490" y="514" width="160" height="6" fill="#b3f28a" opacity="0.15"/>
-      <text x="570" y="150" text-anchor="middle" font-family="UnifrakturCook, serif" font-size="26" fill="#f2a63a">Exit</text>
-      <rect class="outline" x="470" y="160" width="200" height="370" rx="10" fill="transparent" stroke="none"/>
-    </g>
-
-    <rect width="1200" height="700" fill="url(#candlelight)" pointer-events="none"/>
-
-    ${hotspot("desk", "The desk, lock IV", [52, 430, 380, 230], `
-      <rect x="52" y="470" width="380" height="26" fill="#4a2c16" stroke="#1d1007" stroke-width="3"/>
-      <rect x="66" y="496" width="352" height="96" fill="#3b2414"/>
-      <rect x="84" y="512" width="140" height="62" fill="#2e1c0f" stroke="#1d1007"/><circle cx="154" cy="543" r="5" fill="#b08d3e"/>
-      <rect x="66" y="592" width="22" height="66" fill="#2e1c0f"/><rect x="396" y="592" width="22" height="66" fill="#2e1c0f"/>
-      <path d="M240 466 L330 452 L344 468 L254 482Z" fill="#e6d6ad"/>
-      <path d="M262 466 L320 457 M264 472 L318 464" stroke="#7d6a4c"/>
-      <path d="M312 470 l14 -6" stroke="#8f1421" stroke-width="3"/>
-      <rect x="110" y="430" width="16" height="40" fill="#e3d6b2"/>
-      <path d="M118 410 C112 420 112 428 118 432 C124 428 124 420 118 410Z" fill="#f2a63a">
-        <animate attributeName="d" dur="1.4s" repeatCount="indefinite" values="M118 410 C112 420 112 428 118 432 C124 428 124 420 118 410Z;M117 407 C111 419 113 428 118 432 C123 428 125 419 117 407Z;M118 410 C112 420 112 428 118 432 C124 428 124 420 118 410Z"/></path>
-      <path d="M126 450 q4 8 0 16" stroke="#d4c49a" fill="none"/>
-      ${plate(3, 366, 524)}`)}
-
-    ${hotspot("safe", "The safe, lock V", [930, 548, 170, 136], `
-      <rect x="930" y="548" width="170" height="136" rx="6" fill="#2f3532" stroke="#141816" stroke-width="4"/>
-      <rect x="944" y="562" width="142" height="108" rx="4" fill="#363d39" stroke="#1d221f"/>
-      <circle cx="1000" cy="616" r="26" fill="#1d221f" stroke="#8a8f86" stroke-width="3"/>
-      ${Array.from({ length: 10 }, (_, i) => {
-        const a = (i / 10) * Math.PI * 2;
-        return `<line x1="${1000 + Math.sin(a) * 18}" y1="${616 - Math.cos(a) * 18}" x2="${1000 + Math.sin(a) * 23}" y2="${616 - Math.cos(a) * 23}" stroke="#8a8f86" stroke-width="2"/>`;
-      }).join("")}
-      <rect x="1052" y="596" width="10" height="40" rx="3" fill="#8a8f86"/>
-      ${plate(4, 1062, 528)}`)}
-
-    <rect width="1200" height="700" fill="url(#vignette)" pointer-events="none"/>
-  `;
-
+  unmountTheme?.();
   const room = $("room");
-  room.innerHTML = svg;
+  room.innerHTML = state.theme.render({ hotspot, plate, door });
+  room.setAttribute("aria-label", `${state.theme.name}. Choose an object to search it.`);
   room.classList.remove("door-ready");
+  $("screen-game").dataset.theme = state.theme.id;
 
   for (const el of room.querySelectorAll(".hotspot")) {
     const open = () => (el.dataset.object === "door" ? openDoor() : openPuzzle(el.dataset.object));
@@ -339,26 +194,39 @@ function buildRoom() {
       }
     });
   }
+  unmountTheme = state.theme.mount?.(room) ?? null;
 }
 
-// The portrait's eyes follow the cursor around the room.
-document.addEventListener("pointermove", (e) => {
-  const eyes = document.querySelector(".portrait-eyes");
-  if (!eyes || $("screen-game").hidden) return;
-  const rect = $("room").getBoundingClientRect();
-  const ex = rect.left + (162 / 1200) * rect.width;
-  const ey = rect.top + (182 / 700) * rect.height;
-  const angle = Math.atan2(e.clientY - ey, e.clientX - ex);
-  eyes.setAttribute("transform", `translate(${Math.cos(angle) * 4} ${Math.sin(angle) * 3})`);
-});
-
 function markSolved(object) {
-  const index = OBJECTS.indexOf(object);
+  const index = objectIndex(object);
+  const puzzle = state.room.puzzles[index];
   const el = document.querySelector(`.hotspot[data-object="${object}"]`);
   el.classList.add("solved");
-  el.querySelector(".digit-text").textContent = state.room.puzzles[index].digit;
-  el.setAttribute("aria-label", `${OBJECT_NAMES[object]}, lock ${NUMERALS[index]}, opened. Digit ${state.room.puzzles[index].digit}`);
-  if (state.solved.size === OBJECTS.length) $("room").classList.add("door-ready");
+  el.querySelector(".digit-text").textContent = puzzle.digit;
+  el.setAttribute("aria-label", `${state.theme.objects[index].name}, lock ${NUMERALS[index]}, opened. Digit ${puzzle.digit}`);
+  if (state.solved.size === state.theme.objects.length) $("room").classList.add("door-ready");
+  emit("puzzle:solved", { index, object, solvedCount: state.solved.size });
+}
+
+/* ---------- Notices ---------- */
+
+let toastTimer = 0;
+function toast(message, { duration = 4000 } = {}) {
+  // A popover, so it shows above any open modal dialog.
+  const el = $("toast");
+  el.textContent = message;
+  if (el.matches(":popover-open")) el.hidePopover();
+  el.showPopover();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.hidePopover(), duration);
+}
+
+function flickerLights(ms = 700) {
+  document.body.classList.remove("flicker");
+  void document.body.offsetWidth;
+  document.body.style.setProperty("--flicker-ms", `${ms}ms`);
+  document.body.classList.add("flicker");
+  setTimeout(() => document.body.classList.remove("flicker"), ms);
 }
 
 /* ---------- Puzzles ---------- */
@@ -389,7 +257,7 @@ function isCorrect(puzzle, input) {
 
 function openPuzzle(object) {
   if (state.over) return;
-  const index = OBJECTS.indexOf(object);
+  const index = objectIndex(object);
   const puzzle = state.room.puzzles[index];
   const solved = state.solved.has(object);
   state.current = object;
@@ -418,13 +286,14 @@ function openPuzzle(object) {
 
   $("puzzle").showModal();
   if (!solved) input.querySelector("input")?.focus();
+  emit("puzzle:open", { index, object, solved });
 }
 
 function renderHints(puzzle) {
   const shown = state.hintsShown[state.current] ?? 0;
   $("hint-list").innerHTML = puzzle.hints.slice(0, shown).map((h) => `<li>${escapeHtml(h)}</li>`).join("");
   $("hint-btn").hidden = shown >= puzzle.hints.length;
-  $("hint-btn").textContent = shown === 0 ? "Ask the ghost for a hint" : "Ask for another hint";
+  $("hint-btn").textContent = shown === 0 ? "Get a hint" : "Get another hint";
 }
 
 function renderReveal(puzzle, solved) {
@@ -437,7 +306,7 @@ function renderReveal(puzzle, solved) {
 }
 
 $("hint-btn").addEventListener("click", () => {
-  const puzzle = state.room.puzzles[OBJECTS.indexOf(state.current)];
+  const puzzle = state.room.puzzles[objectIndex(state.current)];
   state.hintsShown[state.current] = (state.hintsShown[state.current] ?? 0) + 1;
   renderHints(puzzle);
 });
@@ -446,7 +315,7 @@ $("puzzle-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (state.over) return;
   const object = state.current;
-  const puzzle = state.room.puzzles[OBJECTS.indexOf(object)];
+  const puzzle = state.room.puzzles[objectIndex(object)];
   const answer = new FormData(e.target).get("answer");
   const feedback = $("puzzle-feedback");
 
@@ -468,7 +337,8 @@ $("puzzle-form").addEventListener("submit", async (e) => {
     return;
   }
 
-  await loseHeart();
+  emit("answer:wrong", { index: objectIndex(object), object });
+  await loseHeart("puzzle");
   if (state.over) return;
   feedback.textContent = `Wrong. That's not what the terms say. ${state.hearts} ${state.hearts === 1 ? "heart" : "hearts"} left.`;
   feedback.className = "feedback bad";
@@ -478,12 +348,15 @@ $("puzzle-form").addEventListener("submit", async (e) => {
 
 function openDoor() {
   if (state.over) return;
-  const found = state.room.puzzles.map((p, i) => (state.solved.has(OBJECTS[i]) ? p.digit : "_")).join(" ");
-  const remaining = OBJECTS.length - state.solved.size;
+  const objects = state.theme.objects;
+  const found = state.room.puzzles.map((p, i) => (state.solved.has(objects[i].id) ? p.digit : "_")).join(" ");
+  const remaining = objects.length - state.solved.size;
+  const blocked = doorGuards.map((guard) => guard()).filter(Boolean);
   $("door-text").textContent =
-    remaining === 0
+    (remaining === 0
       ? `Five digits, five brass plates. Enter them in order from I to V. Digits found: ${found}`
-      : `The keyhole wants five digits. ${remaining} ${remaining === 1 ? "lock is" : "locks are"} still closed, so a guess is likely to cost you. Digits found: ${found}`;
+      : `The lock wants five digits. ${remaining} ${remaining === 1 ? "lock is" : "locks are"} still closed, so a guess is likely to cost you. Digits found: ${found}`) +
+    (blocked.length ? ` ${blocked.join(" ")}` : "");
   $("door-feedback").textContent = "";
   $("door-feedback").className = "feedback";
   $("door-code").value = "";
@@ -501,11 +374,18 @@ $("door-form").addEventListener("submit", async (e) => {
     return;
   }
   if (code === state.room.doorCode) {
+    const blocked = doorGuards.map((guard) => guard()).find(Boolean);
+    if (blocked) {
+      $("door-feedback").textContent = blocked;
+      $("door-feedback").className = "feedback bad";
+      return;
+    }
     playClick();
     endGame(true);
     return;
   }
-  await loseHeart();
+  emit("answer:wrong", { index: -1, object: "door" });
+  await loseHeart("door");
   if (state.over) return;
   $("door-feedback").textContent = `The key won't turn. ${state.hearts} ${state.hearts === 1 ? "heart" : "hearts"} left.`;
   $("door-feedback").className = "feedback bad";
@@ -529,7 +409,10 @@ function renderContract(query) {
   const box = $("contract-text");
   const q = query.trim();
   if (q.length < 2) {
-    box.textContent = text;
+    const mark = state.termsHighlight;
+    const at = mark ? text.indexOf(mark) : -1;
+    if (at < 0) box.textContent = text;
+    else box.innerHTML = `${escapeHtml(text.slice(0, at))}<mark class="changed">${escapeHtml(mark)}</mark>${escapeHtml(text.slice(at + mark.length))}`;
     $("contract-count").textContent = "";
     return;
   }
@@ -565,11 +448,13 @@ function preloadScares() {
 async function jumpscare(level) {
   const scare = $("scare");
   const { src, focus } = SCARES[level - 1] ?? SCARES.at(-1);
-  const final = level >= MAX_HEARTS;
+  const final = level >= 5;
   const hitMs = 900 + level * 180 + (final ? 600 : 0);
   const calm = reducedMotion.matches;
 
   // The dread: the lights die, the music cuts out, a heartbeat. Then it hits.
+  state.scaring = true;
+  emit("scare:start", { level });
   duckAmbience();
   document.body.classList.add("lights-out");
   playHeartbeat(level);
@@ -610,13 +495,18 @@ async function jumpscare(level) {
   scare.className = "scare";
   document.body.classList.remove("shake", "lights-out");
   restoreAmbience();
+  state.scaring = false;
+  emit("scare:end", { level });
 }
 // Escape shouldn't skip a scare.
 $("scare").addEventListener("cancel", (e) => e.preventDefault());
 
-async function loseHeart() {
+// Scares escalate to the worst one on the last heart, however many you started with.
+async function loseHeart(cause = "puzzle") {
   state.hearts -= 1;
-  const level = MAX_HEARTS - state.hearts;
+  const lost = state.maxHearts - state.hearts;
+  const level = state.hearts <= 0 ? 5 : Math.max(1, Math.min(4, Math.round((lost / state.maxHearts) * 5)));
+  emit("heart:lost", { hearts: state.hearts, maxHearts: state.maxHearts, cause });
   await jumpscare(level);
   renderHearts(state.hearts);
   if (state.hearts <= 0) endGame(false);
@@ -894,6 +784,7 @@ $("toggle-sound").addEventListener("click", (e) => {
   btn.title = state.sound ? "Sound on" : "Sound off";
   unlockAudio();
   mainOut?.gain.setTargetAtTime(state.sound ? 1 : 0, audio.currentTime, 0.05);
+  emit("sound:toggle", { on: state.sound });
 });
 
 /* ---------- Utilities ---------- */
@@ -901,3 +792,34 @@ $("toggle-sound").addEventListener("click", (e) => {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
+
+/* ---------- The api for features ---------- */
+
+Object.assign(api, {
+  getState: () => state,
+  getTheme: () => state.theme,
+  startGame,
+  showScreen: show,
+  elapsed,
+  loseHeart,
+  jumpscare,
+  toast,
+  flickerLights,
+  unlockAudio,
+  getAudio() {
+    unlockAudio();
+    return audio ? { ctx: audio, out: mainOut, scareBus } : null;
+  },
+  setTermsText(text, { highlight = null } = {}) {
+    state.room.termsText = text;
+    state.termsHighlight = highlight;
+    renderContract($("contract-search").value);
+  },
+  addDoorGuard(guard) {
+    doorGuards.push(guard);
+    return () => doorGuards.splice(doorGuards.indexOf(guard), 1);
+  },
+  escapeHtml,
+});
+
+emit("core:ready");

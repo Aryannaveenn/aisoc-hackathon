@@ -1,0 +1,16 @@
+/* Share card in the ending dialog. */
+
+.share-preview {
+  position: relative;
+  margin: 0.6em 0 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--grave);
+  box-shadow: 0 0 0 1px #b9a374, 0 12px 30px rgb(43 29 18 / 0.35);
+  aspect-ratio: 1200 / 630;
+}
+.share-preview canvas { display: block; width: 100%; height: auto; }
+.share.drawing .share-preview canvas { opacity: 0; }
+.share-preview canvas { transition: opacity 0.4s ease; }
+
+.share-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }

@@ -4,19 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Terms of Dread</title>
+  <script>if (/[?&]room=/.test(location.search)) document.documentElement.classList.add("deep-link");</script>
   <meta name="description" content="A Halloween escape room built from a website's terms and conditions." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.5 1.2 4.4 2.6.9-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.9 4.2 7.2C19.5 16.4 12 21 12 21z%22 fill=%22%238f1421%22/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/rooms.css" />
+  <link rel="stylesheet" href="css/summon.css" />
+  <link rel="stylesheet" href="css/presets.css" />
+  <link rel="stylesheet" href="css/dread.css" />
+  <link rel="stylesheet" href="css/ghost.css" />
+  <link rel="stylesheet" href="css/share.css" />
+  <link rel="stylesheet" href="css/twist.css" />
+  <link rel="stylesheet" href="css/haunting.css" />
 </head>
 <body>
   <!-- Title: the player "signs" a cursed contract to enter -->
   <main id="screen-title" class="screen">
     <article class="deed">
       <h1 class="deed-title">Terms of Dread</h1>
-      <p class="deed-lede">Every website has terms you agreed to without reading. Tonight, they read you. Bring a site's terms and conditions, and they become a haunted office you have to escape by reading the fine print.</p>
+      <p class="deed-lede">Every website has terms you agreed to without reading. Tonight, they read you. Bring a site's terms and conditions, and they become a haunted room you have to escape by reading the fine print.</p>
 
       <form id="summon-form" class="deed-form">
         <label for="terms-url">Link to the terms and conditions</label>
@@ -36,7 +45,9 @@
         </div>
       </form>
 
-      <p class="deed-rules">You start with five hearts. Every wrong answer summons something, and costs you one.</p>
+      <div id="title-extras" class="title-extras"></div>
+
+      <p class="deed-rules">You start with up to five hearts; nastier terms give you fewer. Every wrong answer summons something, and costs you one.</p>
       <p class="deed-warning">Contains loud screams, sudden frightening images and flashing effects. Turn your volume down if you're wearing headphones.</p>
     </article>
   </main>
@@ -44,9 +55,14 @@
   <!-- Loading -->
   <main id="screen-loading" class="screen" hidden>
     <div class="loading">
-      <div class="candle" aria-hidden="true"><span class="flame"></span></div>
+      <div class="loading-light" aria-hidden="true">
+        <div class="candle"><span class="flame"></span><span class="wax-drip"></span></div>
+      </div>
       <p id="loading-line" class="loading-line" aria-live="polite">Reading the fine print by candlelight…</p>
-      <p class="loading-note">Building a room takes about a minute.</p>
+      <p id="loading-note" class="loading-note">Building a room takes about a minute.</p>
+      <p id="loading-progress" class="loading-progress" aria-live="polite" hidden></p>
+      <ol id="loading-scraps" class="scraps" aria-label="Clauses found so far"></ol>
+      <button id="loading-cancel" type="button" class="btn btn-quiet btn-small loading-cancel" hidden>Turn back</button>
     </div>
   </main>
 
@@ -56,6 +72,7 @@
       <div id="hearts" class="hearts" aria-label="Hearts remaining"></div>
       <p id="hud-company" class="hud-company"></p>
       <div class="hud-right">
+        <div id="hud-extras" class="hud-extras"></div>
         <span id="timer" class="timer" aria-label="Time elapsed">0:00</span>
         <button id="open-contract" class="btn btn-small" type="button">Read the terms</button>
         <button id="toggle-sound" class="btn btn-small btn-icon" type="button" aria-pressed="true" aria-label="Sound on" title="Sound on">
@@ -66,7 +83,8 @@
 
     <p id="intro" class="intro"></p>
 
-    <div class="room-wrap">
+    <div id="room-wrap" class="room-wrap">
+      <div id="room-overlay" class="room-overlay"></div>
       <svg id="room" class="room" viewBox="0 0 1200 700" role="group" aria-label="The haunted office. Choose an object to search it."></svg>
     </div>
 
@@ -89,7 +107,7 @@
       <p id="puzzle-feedback" class="feedback" role="status"></p>
 
       <div class="hints">
-        <button id="hint-btn" type="button" class="btn btn-quiet btn-small">Ask the ghost for a hint</button>
+        <button id="hint-btn" type="button" class="btn btn-quiet btn-small">Get a hint</button>
         <ol id="hint-list" class="hint-list"></ol>
       </div>
 
@@ -137,6 +155,7 @@
       <p id="ending-text" class="riddle"></p>
       <h3>What you actually agreed to</h3>
       <ul id="ending-verdict" class="verdict"></ul>
+      <div id="ending-extras" class="ending-extras"></div>
       <div class="deed-actions">
         <button id="retry" type="button" class="btn btn-seal">Try this room again</button>
         <button id="new-room" type="button" class="btn btn-quiet">Summon a new room</button>
@@ -154,6 +173,8 @@
     <div class="scare-grain" aria-hidden="true"></div>
     <p id="scare-text" class="scare-text"></p>
   </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" popover="manual"></div>
 
   <script src="game.js" type="module"></script>
 </body>

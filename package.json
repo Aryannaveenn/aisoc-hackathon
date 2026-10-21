@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
-    "dev": "node --env-file-if-exists=.env --watch server.js"
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "rooms:prebuild": "node --env-file-if-exists=.env scripts/prebuild.js"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,155 @@
+/* Random hauntings. Every layer is decoration: it never takes a click. */
+
+.room-overlay > .haunt-layer,
+.haunt-layer { position: absolute; pointer-events: none; }
+
+/* ---------- Lights dim (the calm version of a flicker) ---------- */
+
+.haunt-dim {
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  animation: haunt-dim 2.5s ease-in-out forwards;
+}
+@keyframes haunt-dim {
+  0%, 100% { opacity: 0; }
+  35%, 60% { opacity: 0.72; }
+}
+
+/* ---------- Whispered words on the wall ---------- */
+
+.haunt-whisper {
+  max-width: 44%;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(0.85rem, 2vw, 1.5rem);
+  line-height: 1.2;
+  color: var(--ecto);
+  text-shadow: 0 0 12px rgb(179 242 138 / 0.7), 0 0 2px rgb(0 0 0 / 0.8);
+  opacity: 0;
+  animation: haunt-whisper 5s ease-in-out forwards;
+}
+@keyframes haunt-whisper {
+  0% { opacity: 0; filter: blur(6px); translate: 0 6px; letter-spacing: 0.3em; }
+  30%, 65% { opacity: 0.75; filter: blur(0); translate: 0 0; letter-spacing: 0.04em; }
+  100% { opacity: 0; filter: blur(8px); translate: 0 -10px; letter-spacing: 0.2em; }
+}
+
+/* ---------- A shadow crossing the wall ---------- */
+
+.haunt-shadow {
+  bottom: 0;
+  width: 38%;
+  opacity: 0;
+  filter: blur(2.5px);
+  animation: var(--haunt-ms, 7s) linear forwards;
+}
+.haunt-shadow img { display: block; width: 100%; height: auto; }
+.haunt-shadow.rtl { animation-name: haunt-glide-rtl; }
+.haunt-shadow.ltr { animation-name: haunt-glide-ltr; }
+.haunt-shadow.ltr img { transform: scaleX(-1); }
+
+@keyframes haunt-glide-rtl {
+  0% { left: 100%; opacity: 0; }
+  12% { opacity: 0.7; }
+  85% { opacity: 0.7; }
+  100% { left: -40%; opacity: 0; }
+}
+@keyframes haunt-glide-ltr {
+  0% { left: -40%; opacity: 0; }
+  12% { opacity: 0.7; }
+  85% { opacity: 0.7; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes haunt-loom {
+  0%, 100% { opacity: 0; }
+  40%, 70% { opacity: 0.6; }
+}
+
+/* ---------- Fog creeping in from the edges of the screen ---------- */
+
+.haunt-fog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse 60% 30% at 50% 108%, rgb(196 210 196 / 0.55), transparent 70%),
+    radial-gradient(ellipse 30% 70% at -6% 60%, rgb(196 210 196 / 0.5), transparent 70%),
+    radial-gradient(ellipse 30% 70% at 106% 40%, rgb(196 210 196 / 0.5), transparent 70%),
+    radial-gradient(ellipse 50% 22% at 50% -6%, rgb(196 210 196 / 0.3), transparent 70%);
+  animation: haunt-fog var(--haunt-ms, 10s) ease-in-out forwards;
+}
+/* Wisps: soft noise, kept to the edges by a mask, drifting slowly. */
+.haunt-fog::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.8 0 0 0 0 0.85 0 0 0 0 0.8 0 0 0 1.4 -0.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 400px 400px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 40%, #000 95%);
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 40%, #000 95%);
+  opacity: 0.9;
+  animation: haunt-drift var(--haunt-ms, 10s) linear forwards;
+}
+@keyframes haunt-fog {
+  0% { opacity: 0; }
+  35%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes haunt-drift {
+  from { transform: translateX(-3%) scale(1.04); }
+  to { transform: translateX(3%) scale(1); }
+}
+
+/* ---------- Handprints pressed against the glass ---------- */
+
+.haunt-hand {
+  width: 7%;
+  min-width: 26px;
+  aspect-ratio: 108 / 128;
+  opacity: 0;
+  filter: blur(0.6px) drop-shadow(0 0 6px rgb(223 233 214 / 0.5));
+  animation: haunt-press 0.5s ease-out forwards, haunt-fade 1.6s ease-in forwards;
+}
+.haunt-hand svg { display: block; width: 100%; height: 100%; }
+.haunt-hand.flip svg { transform: scaleX(-1); }
+@keyframes haunt-press {
+  0% { opacity: 0; transform: scale(1.12); }
+  40% { opacity: 0.55; transform: scale(0.98); }
+  100% { opacity: 0.36; transform: scale(1); }
+}
+@keyframes haunt-fade {
+  0% { opacity: 0.36; }
+  100% { opacity: 0; }
+}
+
+/* ---------- A subliminal glimpse of something ---------- */
+
+.haunt-glimpse {
+  width: 24%;
+  aspect-ratio: 3 / 4;
+  opacity: 0.2;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 35%, transparent 72%);
+}
+.haunt-glimpse img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.4); }
+
+/* ---------- Reduced motion: slow fades only, no flashes or movement ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .haunt-shadow, .haunt-shadow.ltr, .haunt-shadow.rtl { animation-name: haunt-loom; }
+  .haunt-fog::before { animation: none; }
+  .haunt-whisper { animation-name: haunt-whisper-calm; }
+  .haunt-hand { animation: haunt-fade-in 1.2s ease-out forwards, haunt-fade 1.6s ease-in forwards; }
+  .haunt-glimpse { display: none; }
+  @keyframes haunt-whisper-calm {
+    0%, 100% { opacity: 0; }
+    30%, 65% { opacity: 0.75; }
+  }
+  @keyframes haunt-fade-in {
+    from { opacity: 0; }
+    to { opacity: 0.36; }
+  }
+}

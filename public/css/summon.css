@@ -1,0 +1,186 @@
+/* The loading screen: a candle burns while clauses of the contract are pinned up around it. */
+
+/* Anchored to the top, so the candle doesn't drift up as scraps arrive. */
+#screen-loading {
+  align-items: start;
+  overflow-x: clip; /* tilted scraps mustn't push the page sideways on a phone */
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 22%, rgb(242 166 58 / 0.13), transparent 70%),
+    radial-gradient(ellipse at 50% 100%, rgb(0 0 0 / 0.5), transparent 60%);
+}
+
+.loading {
+  width: min(820px, 100%);
+  padding: 9vh 0 4vh;
+}
+
+/* The candle, in its own pool of light. */
+.loading-light {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  height: 150px;
+}
+.loading-light::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 10px;
+  width: 260px; height: 260px;
+  transform: translate(-50%, -30%);
+  background: radial-gradient(circle, rgb(242 166 58 / 0.22), transparent 65%);
+  animation: summon-halo 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.loading-light .candle { box-shadow: inset -6px 0 10px rgb(0 0 0 / 0.18); }
+.loading-light .candle::after {
+  /* the wick */
+  content: "";
+  position: absolute; left: 50%; top: -7px;
+  width: 2px; height: 8px; margin-left: -1px;
+  background: #2b1d12; border-radius: 1px;
+}
+.wax-drip {
+  position: absolute; left: 4px; top: 2px;
+  width: 6px; height: 22px;
+  background: #efe4c8;
+  border-radius: 3px 3px 4px 4px;
+}
+
+.loading-line {
+  min-height: 2.6em;
+  margin: 1.1em auto 0.2em;
+  max-width: 34ch;
+  text-wrap: balance;
+}
+
+/* Five unlit wax seals, one per clause. */
+.loading-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 1.1em 0 0;
+}
+.seal-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid #4a3a22;
+  background: #1c2620;
+  transition: background 0.4s, box-shadow 0.4s, border-color 0.4s;
+}
+.seal-dot.lit {
+  background: radial-gradient(circle at 35% 35%, #c42a38, var(--blood) 60%, #5e0b14);
+  border-color: #5e0b14;
+  box-shadow: 0 0 10px rgb(196 42 56 / 0.55);
+}
+.loading-count {
+  margin-left: 6px;
+  color: var(--dust);
+  font-size: var(--step--1);
+  font-style: italic;
+}
+
+/* The scraps of contract. */
+.scraps {
+  list-style: none;
+  margin: 1.4em auto 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 22px 20px;
+  max-width: 780px;
+}
+.scraps > .scrap:nth-child(3n + 2) { margin-top: 10px; }
+.scraps > .scrap:nth-child(3n) { margin-top: 4px; }
+.scrap {
+  position: relative;
+  width: 236px;
+  padding: 18px 16px 20px;
+  text-align: left;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 0.3), transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgb(110 70 20 / 0.3), transparent 60%),
+    var(--parchment);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.55), 0 0 40px rgb(242 166 58 / 0.07);
+  transform: rotate(var(--tilt, 0deg));
+  /* a torn bottom edge */
+  clip-path: polygon(0 0, 100% 0, 100% 94%, 92% 97%, 84% 93%, 75% 98%, 66% 94%, 57% 99%, 47% 95%, 38% 98%, 29% 93%, 19% 98%, 10% 94%, 0 97%);
+  animation: scrap-pin 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+.scrap:nth-child(even) {
+  clip-path: polygon(0 0, 100% 0, 100% 97%, 90% 93%, 81% 98%, 72% 94%, 62% 98%, 53% 93%, 43% 97%, 34% 94%, 24% 99%, 15% 94%, 6% 98%, 0 94%);
+}
+.scrap-pin {
+  position: absolute;
+  left: 50%; top: 6px;
+  width: 11px; height: 11px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d8434f, var(--blood) 55%, #4a0710);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.5);
+}
+.scrap-ref {
+  margin: 0 0 0.35em;
+  font-size: var(--step--1);
+  line-height: 1.3;
+  color: #6b5537;
+  font-style: italic;
+}
+.scrap-title {
+  display: block;
+  margin-top: 0.1em;
+  font-style: normal;
+  font-size: var(--step-0);
+  color: var(--blood);
+}
+.scrap-quote {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  font-style: italic;
+}
+
+.loading-cancel {
+  margin-top: 2.2em;
+  color: var(--dust);
+}
+
+@keyframes scrap-pin {
+  0% { opacity: 0; transform: translateY(-18px) rotate(calc(var(--tilt, 0deg) + 8deg)) scale(1.06); filter: brightness(1.6); }
+  60% { opacity: 1; filter: brightness(1.05); }
+  100% { opacity: 1; transform: rotate(var(--tilt, 0deg)); filter: none; }
+}
+@keyframes summon-halo {
+  0%, 100% { opacity: 0.85; transform: translate(-50%, -30%) scale(1); }
+  45% { opacity: 1; transform: translate(-50%, -30%) scale(1.06); }
+  70% { opacity: 0.75; transform: translate(-50%, -30%) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrap, .loading-light::before { animation: none; }
+}
+
+/* On a phone the scraps pile up: each new one pinned over the bottom of the last. */
+@media (max-width: 640px) {
+  .loading { padding-top: 4vh; }
+  .loading-light { height: 124px; }
+  .loading-line { min-height: 0; margin-top: 0.9em; }
+  .loading-progress { margin-top: 0.8em; }
+  .scraps { gap: 0; flex-direction: column; align-items: center; margin-top: 1.1em; }
+  .scraps > .scrap { margin-top: 0; }
+  .scraps > .scrap + .scrap { margin-top: -16px; }
+  .scrap:not(:last-child) { padding-bottom: 26px; }
+  .scrap:not(:last-child) .scrap-quote { -webkit-line-clamp: 1; }
+  .scrap { width: min(100%, 360px); padding: 14px 14px 18px; }
+  .scrap-title { font-size: 1.05rem; }
+  .scrap-quote {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .loading-cancel { margin-top: 1.6em; }
+}

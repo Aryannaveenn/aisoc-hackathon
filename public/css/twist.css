@@ -1,0 +1,86 @@
+/* "We've updated our terms": the notice nailed up in the room, and its dialog. */
+
+.twist-notice {
+  position: absolute;
+  min-width: 40px;
+  aspect-ratio: 120 / 146;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform-origin: 18% 10%;
+  rotate: -3deg;
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.6)) drop-shadow(0 0 10px rgb(179 242 138 / 0.55));
+  animation: twist-glow 2.4s ease-in-out infinite;
+}
+.twist-notice svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.twist-notice:hover, .twist-notice:focus-visible { rotate: -1deg; }
+.twist-notice:focus-visible { outline: 3px solid var(--candle); outline-offset: 4px; }
+
+/* Arriving: it swings on its nail as if just hammered in. */
+.twist-notice.arriving { animation: twist-hang 1.4s cubic-bezier(0.3, 1.6, 0.5, 1) both, twist-glow 2.4s 1.4s ease-in-out infinite; }
+
+.twist-notice .twist-crack { opacity: 0; }
+.twist-notice .twist-strike { opacity: 0; }
+
+/* Read: the seal is broken and the glow is gone. */
+.twist-notice.read {
+  animation: none;
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.6)) brightness(0.8) sepia(0.3);
+}
+.twist-notice.read .twist-crack, .twist-notice.read .twist-strike { opacity: 1; }
+
+@keyframes twist-glow {
+  0%, 100% { filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.6)) drop-shadow(0 0 6px rgb(179 242 138 / 0.35)); }
+  50% { filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.6)) drop-shadow(0 0 22px rgb(179 242 138 / 0.95)); }
+}
+@keyframes twist-hang {
+  0% { opacity: 0; transform: translateY(-30%) rotate(-16deg); }
+  35% { opacity: 1; transform: translateY(0) rotate(9deg); }
+  60% { transform: rotate(-5deg); }
+  80% { transform: rotate(2deg); }
+  100% { transform: rotate(0); }
+}
+
+/* ---------- The dialog ---------- */
+
+.twist-plate { background: var(--blood); color: #fbe9d0; }
+
+.twist-choices { width: 100%; }
+
+.twist-reveal h3:first-child { margin-top: 1em; }
+
+.twist-diff { display: grid; gap: 10px; }
+.twist-diff p {
+  margin: 0;
+  padding: 0.7em 1em;
+  border-left: 3px solid;
+  font-style: italic;
+}
+.twist-before { border-color: #8a7a5c; background: rgb(255 255 255 / 0.2); color: #6b5537; }
+.twist-after { border-color: var(--blood); background: rgb(143 20 33 / 0.1); }
+.twist-label {
+  display: block;
+  font-style: normal;
+  font-variant: small-caps;
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15em;
+}
+.twist-before .twist-label { color: #6b5537; }
+.twist-after .twist-label { color: var(--blood); }
+.twist-diff del { text-decoration-color: var(--blood); text-decoration-thickness: 2px; }
+.twist-diff ins {
+  text-decoration: none;
+  color: var(--ink);
+  background: linear-gradient(transparent 55%, rgb(242 166 58 / 0.55) 55%);
+  padding: 0 0.1em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twist-notice, .twist-notice.arriving { animation: none; }
+  .twist-notice.arriving { animation: twist-fade 0.6s ease-out both; }
+  @keyframes twist-fade { from { opacity: 0; } to { opacity: 1; } }
+}

@@ -189,7 +189,8 @@ body.shake { animation: shake 0.45s steps(2) 2; }
   margin: 0; text-align: center;
   font-family: var(--font-gothic); font-size: var(--step-1); color: var(--candle);
 }
-.hud-right { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.hud-right { display: flex; flex-wrap: wrap; gap: 6px 8px; justify-content: flex-end; align-items: center; }
+#open-contract { white-space: nowrap; }
 .timer { font-variant-numeric: tabular-nums; color: var(--dust); margin-right: 4px; }
 
 .hearts { display: flex; gap: 6px; }
@@ -200,6 +201,7 @@ body.shake { animation: shake 0.45s steps(2) 2; }
 .intro { max-width: 70ch; margin: 0.4em auto 1em; text-align: center; color: var(--dust); font-style: italic; }
 
 .room-wrap {
+  position: relative;
   border: 1px solid #2c3a30;
   border-radius: 4px;
   overflow: hidden;
@@ -218,6 +220,37 @@ body.shake { animation: shake 0.45s steps(2) 2; }
 .plate-digit { opacity: 0; transition: opacity 0.4s; }
 .portrait-eyes { transition: transform 0.15s ease-out; }
 .door-ready .door-gap { animation: doorglow 1.8s ease-in-out infinite; }
+
+/* Feature layers drawn over the room (notices, apparitions). Children opt in to pointer events. */
+.room-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.room-overlay > * { pointer-events: auto; }
+
+.hud-extras { display: flex; gap: 8px; align-items: center; }
+.title-extras:empty, .ending-extras:empty { display: none; }
+
+/* ---------- Notices ---------- */
+
+.toast {
+  position: fixed; inset: auto auto 24px 50%; margin: 0; border: 0;
+  width: max-content;
+  pointer-events: none; /* informational; never block the room underneath */
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 0.7em 1.2em;
+  background: var(--parchment); color: var(--ink);
+  border-left: 4px solid var(--blood);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.6);
+}
+
+body.flicker #screen-game { animation: flicker-lights var(--flicker-ms, 700ms) steps(1) forwards; }
+@keyframes flicker-lights {
+  0% { filter: brightness(0.15); }
+  12% { filter: brightness(1); }
+  20% { filter: brightness(0.1); }
+  34% { filter: brightness(0.9); }
+  46% { filter: brightness(0.05); }
+  100% { filter: brightness(1); }
+}
 
 /* ---------- Dialog sheets ---------- */
 
@@ -298,6 +331,7 @@ body.shake { animation: shake 0.45s steps(2) 2; }
 .contract-count { font-size: var(--step--1); margin: 0.3em 0; min-height: 1.4em; color: #6b5537; }
 .contract-text { white-space: pre-wrap; font-size: var(--step--1); line-height: 1.55; max-height: 60vh; overflow: auto; padding-right: 8px; }
 .contract-text mark { background: var(--candle); color: var(--ink); }
+.contract-text mark.changed { background: rgb(143 20 33 / 0.18); color: var(--blood); box-shadow: 0 0 0 2px rgb(143 20 33 / 0.35); }
 
 .ending-title { font-family: var(--font-gothic); font-size: var(--step-3); line-height: 1; margin: 0.8em 0 0.3em; color: var(--blood); }
 .ending-title.won { color: #2f5d1e; }
@@ -414,8 +448,11 @@ body.lights-out dialog[open]:not(.scare)::backdrop { background: #000; }
   body.shake { animation: none; }
   .scare.hit .scare-img, .scare-grain, .scare-text { animation: none; }
   .scare-img.split-r, .scare-img.split-c { display: none; }
-  .flame, .door-ready .door-gap, .heart.breaking { animation: none; }
+  .flame, .door-ready .door-gap, .heart.breaking, body.flicker #screen-game { animation: none; }
 }
+
+/* A ?room= link skips the title; hide it from the first paint (see the script in index.html). */
+.deep-link #screen-title { visibility: hidden; }
 
 @media (max-width: 640px) {
   .hud { grid-template-columns: 1fr auto; }

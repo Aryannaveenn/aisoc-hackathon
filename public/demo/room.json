@@ -1,4 +1,6 @@
 {
+  "id": "demo",
+  "theme": "office",
   "company": "Hollowmere Cloud",
   "intro": "You clicked \"I agree\" on Hollowmere Cloud without reading a word, and now the paperwork has come to collect. The office door has sealed itself, and the ghosts of the fine print won't let you leave until you prove you know what you signed.",
   "doorCode": "10316",
@@ -18,11 +20,19 @@
       "kind": "choice",
       "answer": "Advertising partners",
       "accepted": [],
-      "options": ["Nobody at all", "Advertising partners", "Only the police", "Your emergency contact"],
+      "options": [
+        "Nobody at all",
+        "Advertising partners",
+        "Only the police",
+        "Your emergency contact"
+      ],
       "quote": "We share usage information with our advertising partners so they can show you more relevant offers.",
       "clause_ref": "4.2",
       "plain_english": "How you use the app is passed to advertisers to target you with offers. Your actual files aren't sold.",
-      "hints": ["The portrait cares about your data. Look in section 4.", "Section 4.2 names exactly who your usage information goes to."],
+      "hints": [
+        "The portrait cares about your data. Look in section 4.",
+        "Section 4.2 names exactly who your usage information goes to."
+      ],
       "verified": true,
       "digit": "1"
     },
@@ -33,12 +43,18 @@
       "question": "After how many months without signing in can a free account be treated as abandoned?",
       "kind": "number",
       "answer": "13",
-      "accepted": ["thirteen", "13 months"],
+      "accepted": [
+        "thirteen",
+        "13 months"
+      ],
       "options": [],
       "quote": "If you do not sign in to a free account for 13 consecutive months, we may treat the account as abandoned.",
       "clause_ref": "5.1",
       "plain_english": "If you ignore a free account for a little over a year, Hollowmere can warn you once and then delete everything in it 30 days later.",
-      "hints": ["Clocks count time away. Find the section about inactive accounts.", "Section 5.1 gives a number of consecutive months."],
+      "hints": [
+        "Clocks count time away. Find the section about inactive accounts.",
+        "Section 5.1 gives a number of consecutive months."
+      ],
       "verified": true,
       "digit": "0"
     },
@@ -49,12 +65,18 @@
       "question": "Disputes that aren't resolved informally are settled by binding individual what?",
       "kind": "word",
       "answer": "arbitration",
-      "accepted": ["individual arbitration", "binding arbitration"],
+      "accepted": [
+        "individual arbitration",
+        "binding arbitration"
+      ],
       "options": [],
       "quote": "Any dispute that is not resolved informally will be settled by binding individual arbitration, and you waive any right to take part in a class action or representative proceeding.",
       "clause_ref": "8.2",
       "plain_english": "You can't take Hollowmere to court or join a class action. Disputes go to a private arbitrator, one person at a time, unless you opt out within 30 days.",
-      "hints": ["The bookshelf is full of legal disputes. Look in section 8.", "Section 8.2 says how unresolved disputes are settled."],
+      "hints": [
+        "The bookshelf is full of legal disputes. Look in section 8.",
+        "Section 8.2 says how unresolved disputes are settled."
+      ],
       "verified": true,
       "digit": "3"
     },
@@ -66,11 +88,19 @@
       "kind": "choice",
       "answer": "Faces and objects",
       "accepted": [],
-      "options": ["Only file names", "Faces and objects", "Nothing; files are encrypted", "Colours and file sizes"],
+      "options": [
+        "Only file names",
+        "Faces and objects",
+        "Nothing; files are encrypted",
+        "Colours and file sizes"
+      ],
       "quote": "You agree that we may use automated systems to analyse Your Content, including to recognise faces and objects, in order to build features such as smart albums.",
       "clause_ref": "3.3",
       "plain_english": "Hollowmere scans what you upload, including running face recognition on your photos, to build features.",
-      "hints": ["The desk holds your uploads. Section 3 is about Your Content.", "Section 3.3 says what the automated systems recognise."],
+      "hints": [
+        "The desk holds your uploads. Section 3 is about Your Content.",
+        "Section 3.3 says what the automated systems recognise."
+      ],
       "verified": true,
       "digit": "1"
     },
@@ -81,14 +111,66 @@
       "question": "What is the minimum amount, in pounds, that Hollowmere's total liability is capped at?",
       "kind": "number",
       "answer": "50",
-      "accepted": ["£50", "fifty", "50 pounds"],
+      "accepted": [
+        "£50",
+        "fifty",
+        "50 pounds"
+      ],
       "options": [],
       "quote": "To the maximum extent permitted by law, our total liability to you for any claim relating to the service is limited to the greater of the fees you paid us in the 12 months before the claim, or £50.",
       "clause_ref": "7.2",
       "plain_english": "If Hollowmere loses your files, the most you can claim is what you paid in the last year, or £50 if that's more.",
-      "hints": ["The safe is about money owed to you. Look for liability in section 7.", "Section 7.2 ends with a sum in pounds."],
+      "hints": [
+        "The safe is about money owed to you. Look for liability in section 7.",
+        "Section 7.2 ends with a sum in pounds."
+      ],
       "verified": true,
       "digit": "6"
     }
-  ]
+  ],
+  "dread": {
+    "score": 58,
+    "label": "Quietly sinister",
+    "reasons": [
+      {
+        "category": "Disputes",
+        "severity": 3,
+        "summary": "Binding individual arbitration and a class-action waiver, unless you opt out within 30 days."
+      },
+      {
+        "category": "Your content",
+        "severity": 2,
+        "summary": "A broad licence to your files, including to promote Hollowmere, and face recognition on your photos."
+      },
+      {
+        "category": "Data sharing",
+        "severity": 2,
+        "summary": "Your usage information goes to advertising partners."
+      },
+      {
+        "category": "Liability",
+        "severity": 2,
+        "summary": "If they lose your files, you can claim a year's fees or £50 at most."
+      },
+      {
+        "category": "Auto-renewal",
+        "severity": 1,
+        "summary": "Paid plans renew automatically and paid fees aren't refunded."
+      }
+    ]
+  },
+  "twist": {
+    "clause_ref": "9.1",
+    "original": "We will tell you about material changes by email or in the app at least 14 days before they take effect.",
+    "altered": "We may make material changes at any time without telling you, and they take effect immediately.",
+    "question": "Hollowmere has quietly updated its terms. What do they now say about future changes?",
+    "options": [
+      "They'll email you 14 days before any change",
+      "They can change the terms at any time without telling you",
+      "Changes need your written consent",
+      "Changes only apply to new accounts"
+    ],
+    "answer": "They can change the terms at any time without telling you",
+    "plain_english": "Many sites keep the right to rewrite their terms. Good terms promise notice before changes; bad ones let changes take effect silently, and keep using the service counts as agreeing."
+  }
 }

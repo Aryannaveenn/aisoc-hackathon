@@ -1,0 +1,21 @@
+/* Room theme accents, owned by the rooms feature (see docs/CONTRACTS.md).
+   Only the HUD's company name changes colour to suit each room. */
+
+#screen-game[data-theme="crypt"] .hud-company {
+  color: #c9d6dc;
+  text-shadow: 0 0 14px rgb(168 196 214 / 0.35);
+}
+
+#screen-game[data-theme="parlour"] .hud-company {
+  color: #cdb8ff;
+  text-shadow: 0 0 14px rgb(164 140 255 / 0.4);
+}
+
+#screen-game[data-theme="nursery"] .hud-company {
+  color: #e6c3c9;
+  text-shadow: 0 0 14px rgb(188 211 255 / 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crypt-raven-head, .nursery-doll-head { transition: none !important; }
+}
